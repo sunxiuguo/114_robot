@@ -10,11 +10,27 @@ from datetime import timedelta
 import dingding
 
 headers = {
-    'Content-Type': 'application/json',
-    'Request-Source': 'PC',
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6)'
-                  ' AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36'
+   'Accept':'application/json, text/plain, */*',
+   'Accept-Language':'zh-CN,zh;q=0.9,en;q=0.8',
+   'Connection':'keep-alive',
+   'Content-Type':'application/json;charset=UTF-8',
+   'Cookie':'imed_session=xI4sE0Q7O53TuSMdITK3W0igr3BkloZm_5523996; imed_session=xI4sE0Q7O53TuSMdITK3W0igr3BkloZm_5523996; secure-key=411e5c2b-e81d-45df-9181-23b81f1d6858; agent_login_img_code=ec54e3b95dbd4856b13cad36afa362b3; imed_session=xI4sE0Q7O53TuSMdITK3W0igr3BkloZm_5523996; cmi-user-ticket=JAyUZ1kE0BYYhDi6DrAqGdehC-EhZK88HZilBg..; imed_session_tm=1657199075989',
+   'Origin':'https://www.114yygh.com',
+   'Referer':'https://www.114yygh.com/hospital/142/75fec1a900e3d4c238cf384556de46de/200039484/source',
+   'Request-Source':'PC',
+   'Sec-Fetch-Dest':'empty',
+   'Sec-Fetch-Mode':'cors',
+   'Sec-Fetch-Site':'same-origin',
+   'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36',
+   'sec-ch-ua':'" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
+   'sec-ch-ua-mobile':'?0',
+   'sec-ch-ua-platform':'"macOS"' 
 }
+
+os_list = [
+    'https://www.114yygh.com/hospital/142/75fec1a900e3d4c238cf384556de46de/200039484/source', # 产科门诊
+    'https://www.114yygh.com/hospital/142/75fec1a900e3d4c238cf384556de46de/200039486/source'  # 产科特需门诊
+]
 
 
 def parsing_url(url: str):
@@ -33,15 +49,21 @@ def parsing_url(url: str):
         return None
     else:
         md = {}
-        headers["Referer"] = url
+        # headers["Referer"] = url
 
         hos_code = url_split[4]
+        # print(hos_code)
         first_dept_code = url_split[5]
+        # print(first_dept_code)
         second_dept_code = url_split[6]
+        # print(second_dept_code)
+
 
         week_os_info = request_week_os_info(first_dept_code, second_dept_code, hos_code)
         if week_os_info is not None:
             md.update(week_os_info)
+
+        # print(week_os_info)
 
         os_base_properties = request_os_properties(first_dept_code, second_dept_code, hos_code)
         if os_base_properties is not None:
@@ -67,14 +89,15 @@ def request_week_os_info(first_dept_code: str, second_dept_code: str, hos_code: 
         "week": 1
     }
 
-    request_url = "https://www.114yygh.com/web/product/list"
+    request_url = "https://www.114yygh.com/web/product/list?_time=" + str(time.time())
+    print(request_url)
     response_data = requests.post(request_url, headers=headers, data=json.dumps(body))
-
     response = None
     if response_data is not None:
         response = response_data.json()
 
     if response is None or response["resCode"] != 0:
+        print(response)
         return None
 
     return response["data"]
@@ -192,21 +215,6 @@ def all_info_of_table(request_os_list: list) -> Table:
 
 if __name__ == '__main__':
     console = Console(color_system='256', style=None)
-
-    cookie = console.input(":surfer:[bold deep_sky_blue3] 请输入114北京市预约挂号统一平台授权凭证Cookie：\n")
-    headers["Cookie"] = cookie
-
-    os_list = []
-
-    url = console.input(":robot:[bold sky_blue2] 请键入要实时查询的门诊地址：\n")
-    os_list.append(url)
-
-    while True:
-        access_or_url = console.input(":heavy_exclamation_mark:[bold red1] 键入[Y]进行查询，否则继续批量录入门诊URL：\n")
-        if access_or_url == "Y":
-            break
-        else:
-            os_list.append(access_or_url)
 
     os_data = None
     with console.status("[light_goldenrod3]正在首次加载数据...[/]", spinner="moon"):
